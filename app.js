@@ -2,6 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const Blog = require('./models/blog');
+const blogRoutes = require('./routes/blogRoutes');
 
 //express app
 const app = express();
@@ -24,6 +25,7 @@ app.set('view engine', 'ejs');
 
 // middleware & static files
 app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true })); // for parsing form data
 
 app.use(morgan('dev'));
 
@@ -119,9 +121,45 @@ app.get('/blogs', (req, res) => {
      });
 });
 
+app.post('/blogs', (req, res) => {
+    const blog = new Blog(req.body);
+    blog.save()
+        .then((result) => {
+            res.redirect('/blogs');
+        })
+        .catch((err) => {
+            console.log(err);
+        }); 
+});
+
+app.get('/blogs/:id', (req, res) => {
+    const id = req.params.id;
+    Blog.findById(id)
+        .then((result) => {
+            res.render('details', { title: 'Blog Details', blog: result });
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+}); 
+
+app.delete('/blogs/:id', (req, res) => {
+    const id = req.params.id;
+    Blog.findByIdAndDelete(id)
+        .then((result) => {
+            res.json({ redirect: '/blogs' });
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+});
+
 app.get('/blogs/create', (req, res) => {
     res.render('create' , { title: 'Create a Blog' });
 });
+
+//blog routes
+app.use('/blog', blogRoutes);
 
 
 
